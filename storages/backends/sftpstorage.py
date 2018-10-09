@@ -165,7 +165,12 @@ class SFTPStorage(Storage):
         try:
             self.sftp.stat(remote_path)
             return True
-        except IOError:
+        except (FileNotFoundError, PermissionError):
+            return False
+        except OSError:
+            # There may have been a connection issue, try reconnecting.
+            self.sftp.close()
+            del self._sftp
             return False
 
     def _isdir_attr(self, item):
